@@ -40,7 +40,7 @@ async fn index(template_manager: web::Data<tera::Tera>, pool: web::Data<DbPool>)
     }
 }
 
-#[get("/post/{slug_id}")]
+#[get("/posts/{slug_id}")]
 async fn post_view(
     template_manager: web::Data<tera::Tera>,
     pool: web::Data<DbPool>,
@@ -69,8 +69,15 @@ async fn post_view(
     }
 }
 
+#[get("/posts/new")]
+async fn new_post_view(template_manager: web::Data<tera::Tera>) -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html")
+        .body(template_manager.render("new-post.html", &tera::Context::new()).unwrap())
+}
+
 #[post("/posts/new")]
-async fn new_post(pool: web::Data<DbPool>, data: web::Json<NewPostHandler>) -> impl Responder {
+async fn new_post_create(pool: web::Data<DbPool>, data: web::Json<NewPostHandler>) -> impl Responder {
     let db_conn = pool
         .get()
         .expect("ERROR:> Cannot connect to the database");
@@ -99,7 +106,8 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .service(index)
-            .service(new_post)
+            .service(new_post_view)
+            .service(new_post_create)
             .service(post_view)
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(tera))

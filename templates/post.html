@@ -30,7 +30,7 @@
             border-bottom: 1px #dbdbdb solid;
         }
 
-        #Header .HeaderLogo {
+        #Header .HeaderLogo a{
             display: flex;
         }
         
@@ -63,8 +63,10 @@
     <body>
         <header id="Header">
             <div class="HeaderLogo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Rust_programming_language_black_logo.svg">
-                <h1>Blog | {{post.title}}</h1>
+                <a href="/">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Rust_programming_language_black_logo.svg">
+                    <h1>Blog | {{post.title}}</h1>
+                </a>
             </div>
             <div class="HeaderActions">
                 <a href="/">Back to posts list</a>

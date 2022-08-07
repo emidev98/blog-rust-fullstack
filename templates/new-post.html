@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog | New Post</title>
+    <style>
+        body {
+            margin: 0;
+            color: #dbdbdb;
+            background-color: #1c1c1c;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        #Header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1em;
+            background-color: #212121;
+            border-bottom: 1px #dbdbdb solid;
+        }
+
+        #Header .HeaderLogo a{
+            display: flex;
+        }
+
+        #Header .HeaderLogo img {
+            filter: invert(0.9);
+            width: 32px;
+            height: 32px;
+            margin-right: 1em;
+        }
+
+        #PostWrapper {
+            display: flex;
+            justify-content: center;
+            margin: 1em 4em 0 4em;
+            
+        }
+
+        .PostContent {
+            display: flex;
+            flex-direction: column;
+            background-color: #262627;
+            padding: 1em;
+            border-radius: 0.25em;
+            border: 1px gray solid;
+            min-width: 280px;
+            overflow: auto;
+        }
+
+        .PostContent textarea {
+            margin-bottom: 1em;
+        }
+
+        .PostHeader {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body>
+    <header id="Header">
+        <div class="HeaderLogo">
+            <a href="/">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Rust_programming_language_black_logo.svg">
+                <h1>Blog | New Post</h1>
+            </a>
+        </div>
+        <div class="HeaderActions">
+            <a href="/">Back to posts list</a>
+        </div>
+    </header>
+
+
+    <div id="PostWrapper">
+        <div class="PostContent">
+            <h3>Title</h3>
+            <input id="Title" type="text" />
+            <h3>Post</h3>
+            <textarea id="Body"></textarea>
+            <button id="AddPost">Create Post</button>
+        </div>
+    </div>
+</body>
+
+<script>
+    window.onload = () => {
+        const onSendNewPost = () => {
+            const title = document.getElementById("Title").value;
+            const body = document.getElementById("Body").value;
+            var http = new XMLHttpRequest();
+            http.open('POST', "/posts/new", true);
+
+            http.setRequestHeader('Content-type', 'application/json');
+
+            http.onreadystatechange = function () {
+                if (http.readyState == 4 && http.status == 200) {
+                    window.location = '/posts/' + JSON.parse(http.response).slug;
+                }
+            }
+
+            http.send(JSON.stringify({ body, title }));
+        };
+
+        document.getElementById("AddPost")
+            .addEventListener("click", onSendNewPost);
+    };
+</script>
+
+</html>
