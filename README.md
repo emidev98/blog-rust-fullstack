@@ -1,4 +1,4 @@
-#  Blog Rust Full Stack
+#  Blog Rust Fullstack
 
 This repository drives the developer thru the process of connecting Rust with a Database to add a REST API that allows to write and read data from the Database and in the end transform that REST API into a server side rendering web. Every step has its own independent utility but its progressive thru the process of creating a website with Rust.
 
@@ -6,6 +6,7 @@ This repository drives the developer thru the process of connecting Rust with a 
 2. How to create a rest API.
 3. How to refact the rest API to add server side rendering.
 
+> Each section has a commit at the end with the progress made till that point.
 
 ## 1.[How to connect to the Database using Rust](https://diesel.rs/)
 
@@ -864,3 +865,5 @@ async fn main() -> std::io::Result<()> {
     .bind(("0.0.0.0", 9900))?.run().await
 }
 ```
+
+**[Commit 42b8613 contains the code written until this point](https://github.com/emidev98/blog-rust-fullstack/commit/d5d86850f39c9aa4f5e4ff746a97fbe397d9b085)**
