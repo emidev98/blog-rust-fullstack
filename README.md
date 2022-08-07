@@ -379,3 +379,6 @@ async fn main() -> std::io::Result<()> {
     .bind(("0.0.0.0", 9900))?.run().await
 }
 ```
+
+**[Commit d5d8685 contains the code written until this point](https://github.com/emidev98/blog-rust-fullstack/commit/d5d86850f39c9aa4f5e4ff746a97fbe397d9b085)**
+

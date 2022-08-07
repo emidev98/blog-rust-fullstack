@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog | {{post.title}}</title>
+    <style>
+        body {
+            margin: 0;
+            color: #dbdbdb;
+            background-color: #1c1c1c;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit; 
+        }
+
+        #Header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1em;
+            background-color: #212121;
+            border-bottom: 1px #dbdbdb solid;
+        }
+
+        #Header .HeaderLogo {
+            display: flex;
+        }
+        
+        #Header .HeaderLogo img {
+            filter: invert(0.9);
+            width: 32px;
+            height: 32px;
+            margin-right: 1em;
+        }
+
+        #PostWrapper {
+            margin: 1em 4em 0 4em;
+        }
+
+        .PostContent {
+            background-color: #262627;
+            padding: 1em;
+            border-radius: 0.25em;
+            border: 1px gray solid;
+            margin-bottom: 2em;
+
+        }
+
+        .PostHeader {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+    <body>
+        <header id="Header">
+            <div class="HeaderLogo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Rust_programming_language_black_logo.svg">
+                <h1>Blog | {{post.title}}</h1>
+            </div>
+            <div class="HeaderActions">
+                <a href="/">Back to posts list</a>
+            </div>
+        </header>
+
+        
+        <div id="PostWrapper">
+            <div class="PostContent">
+                <h2>{{post.title}}</h2>
+                <p>{{post.body}}</p>
+            </div>
+        </div>
+    </body>
+</html>
