@@ -1,6 +1,6 @@
 # [Diesel ORM (Object–relational mapping)](https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping)
 
-This is the framework that will be used to connect to the DB. Here you have a collection of examples that you can apply to your own project in case it's needed:
+This is the framework that will be used to connect to the DB. Here you have a collection of examples that you can apply to your own project in case it's needed. To run the code that we'll have in the following sections you must run **cargo run** command.
 
 ## Migrations
 
@@ -204,4 +204,178 @@ This following statement will delete all posts where slug ends with "-post" whic
 diesel::delete(posts.filter(slug.like("%-post%")))
     .execute(&db_conn)
     .expect("ERROR:> Something went wrong trying to delete registers");
+```
+
+**[Commit 1b5394e contains the code written until this point](https://github.com/emidev98/blog-rust-fullstack/commit/1b5394e1f6546a1fbde35500015d6a9a4e2da10a)**
+
+# [Actix Web Server](https://actix.rs/docs/) 
+
+Since one of the tecniques to build backend software is by creating micro-service architectures based on REST APIs. We'll follow the same approach by using Actrix to define the following entry points:
+
+- **GET:/** used to do a healthcheck to validate if the server is up or no.
+
+- **GET:/posts** return all posts stored into the DB
+
+- **POST:/posts/new** create a new post by sending a title and body.
+> Request
+```JSON
+{
+    "title": String,
+    "body": String
+}
+```
+
+> Response
+```JSON
+{
+    "id": Number,
+    "title": String,
+    "body": String,
+    "slug": String
+}
+```
+
+## Server Models
+
+One of the important things about the server is that we'll have the models that will be serializables which means that the server will receive data and will know how to transform that data to our expected model that furthermore we'll store that model into the DB.
+
+As you can see here, we will add a implementation for the data structure Post to create the slug property and another method that will allow us to create posts on a very easy way by sending only the db connection with the NewPostHandler. Finally the last detail you can see that a Serialize and Deserialize attribute has been added to the structures that way will be transformed automatically to JSON in our example since it's a JSON Rest API by using serde.
+
+> blog/src/models.rs
+```Rust
+use diesel::PgConnection;
+use serde::{Serialize, Deserialize};
+use super::schema::posts;
+use diesel::prelude::*;
+
+#[derive(Queryable, Debug, Serialize, Deserialize)]
+pub struct Post {
+    pub id: i32,
+    pub title: String,
+    pub slug: String,
+    pub body: String
+}
+
+impl Post {
+    pub fn slugify(title: &str) -> String {
+        title.replace(" ", "-").to_lowercase()
+    }
+
+    pub fn create_post<'a> (
+        db_conn: &PgConnection, 
+        post: &NewPostHandler
+    ) -> Result<Post, diesel::result::Error> {
+        let slug = Post::slugify(&post.title);
+    
+        let new_post = NewPost {
+            title: &post.title,
+            body: &post.body,
+            slug: &slug
+        };
+
+        diesel::insert_into(posts::table).values(new_post).get_result::<Post>(db_conn)
+    }
+}
+
+#[derive(Queryable, Debug, Serialize, Deserialize)]
+pub struct NewPostHandler {
+    pub title: String,
+    pub body: String
+}
+
+
+#[derive(Queryable, Debug, Serialize, Deserialize)]
+#[derive(Insertable)]
+#[table_name="posts"]
+pub struct NewPost<'a> {
+    pub title: &'a str,
+    pub body: &'a str,
+    pub slug: &'a str
+}
+```
+
+## Server Code
+
+The main takes from server side are:
+- instead of having an unique connection to the DB we create a pool of connections that way the server itself can manage and optimize the database connections instead of doing it manually per each request,
+- each of the rutes architected previously are very easy defined by using attributes on each method with its own logic,
+- the main entry point of out application is defined with **#[actix_web::main]** attribute adding the routes to our Actrix application by instantiating a new App.
+
+To start the server at this point you will realize that the commannd **cargo run** will never stop unless you stop it since will be always listening for any request to the port 9900.
+
+> blog/src/main.rs
+```Rust
+#[macro_use]
+extern crate diesel;
+
+pub mod models;
+pub mod schema;
+
+use self::schema::posts;
+use self::schema::posts::dsl::*;
+use self::models::{Post, NewPost, NewPostHandler};
+
+use dotenv::dotenv;
+use std::env;
+
+use diesel::prelude::*;
+use diesel::pg::PgConnection;
+use diesel::r2d2::{self, ConnectionManager};
+use diesel::r2d2::Pool;
+
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+
+pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+
+#[get("/")]
+async fn healthcheck() -> impl Responder {
+    HttpResponse::Ok().body("healthcheck")
+}
+
+#[get("/posts")]
+async fn get_posts(pool: web::Data<DbPool>) -> impl Responder {
+    let db_conn = pool
+        .get()
+        .expect("ERROR:> Cannot connect to the database");
+
+    match web::block(move || {posts.load::<Post>(&db_conn)}).await {
+        Ok(data) => HttpResponse::Ok().json(data.unwrap()),
+        Err(_err) => HttpResponse::Ok().body("Error")
+    }
+}
+
+#[post("/posts/new")]
+async fn post_posts(pool: web::Data<DbPool>, data: web::Json<NewPostHandler>) -> impl Responder {
+    let db_conn = pool
+        .get()
+        .expect("ERROR:> Cannot connect to the database");
+
+    match web::block(move || {Post::create_post(&db_conn, &data)}).await {
+        Ok(data) => HttpResponse::Ok().json(data.unwrap()),
+        Err(_err) => HttpResponse::Ok().body("Error")
+    }
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    dotenv().ok();
+
+    let db_url = env::var("DATABASE_URL")
+        .expect("ERROR:> DABASE URL NOT FUND IN .env FILE");
+    
+    let connection = ConnectionManager::<PgConnection>::new(db_url);
+
+    let pool = Pool::builder()
+        .build(connection)
+        .expect("ERROR:> Creating DB connection");
+    
+    HttpServer::new(move || {
+        App::new()
+            .service(healthcheck)
+            .service(get_posts)
+            .service(post_posts)
+            .app_data(web::Data::new(pool.clone()))
+    })
+    .bind(("0.0.0.0", 9900))?.run().await
+}
 ```
